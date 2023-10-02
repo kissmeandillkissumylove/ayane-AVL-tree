@@ -26,20 +26,15 @@ class Node(object):
 
 	def update_height(self):
 		"""update height after insertion. complexity: O(1)."""
-		if not self.left and not self.right:
-			self._height = 0
-		elif self.right and not self.left:
-			self._height = self.right._height + 1
-		elif self.left and not self.right:
-			self._height = self.left._height + 1
-		else:
-			self._height = max(self.left._height, self.right._height) + 1
+		self._height = max(
+			self.left._height if self.left is not None else (-1),
+			self.right._height if self.right is not None else (-1)) + 1
 
 	def check_balance(self) -> int:
 		"""checking the balance. if the output is negative, then the tree is unbalanced
 		to the left and vice versa. complexity: O(1)."""
-		return abs(self.left._height if self.left is not None else 0 - (
-			self.right._height if self.right is not None else 0)) >= 2
+		return abs(self.left._height if self.left is not None else (-1) - (
+			self.right._height if self.right is not None else (-1))) >= 2
 
 
 class AVLTree(object):
@@ -72,28 +67,32 @@ class AVLTree(object):
 
 	def _insert(self, data: Union[int, float, str], node: Node) -> Node:
 		"""helper for insert(). complexity: O(log n)."""
-		if not node:  # no node
+		if node is None:
 			node = Node(data)
-		elif data < node.data:  # continue in left side
+
+		elif data < node.data:  # left insert
 			node.left = self._insert(data, node.left)
 			if node.check_balance():
-				if data < node.left.data:  # need right rotate for node
+				if data < node.left.data:  # LL
 					node = self._right_rotate(node)
-				else:  # need left-right rotate for node
-					node = self._left_right_rotate()
-		elif data > node.data:  # continue in right side
+				else:  # LR
+					node = self._left_right_rotate(node)
+
+		elif data > node.data:  # right insert
 			node.right = self._insert(data, node.right)
 			if node.check_balance():
-				if data < node.right.data:  # need right-left rotate for node
-					node.right = self._right_left_rotate(node)
-				else:
+				if data < node.right.data:  # LR
+					node = self._right_left_rotate(node)
+				else:  # RR
 					node = self._left_rotate(node)
-		node.update_height()  # last update height for node
+
+		node.update_height()
+
 		return node
 
 	def _left_right_rotate(self, node: Node):
 		"""swap nodes positions. complexity: O(1)."""
-		node.left = self._left_rotate(node.right)
+		node.left = self._left_rotate(node.left)
 		return self._right_rotate(node)
 
 	def _right_left_rotate(self, node: Node):
@@ -108,8 +107,8 @@ class AVLTree(object):
 		node = node.left
 		noder.left = node.right
 		node.right = noder
-		node.update_height()  # update heights
-		noder.update_height()
+		noder.update_height()  # update heights
+		node.update_height()
 		return node
 
 	@staticmethod
@@ -119,8 +118,8 @@ class AVLTree(object):
 		node = node.right
 		nodel.right = node.left
 		node.left = nodel
-		node.update_height()  # update heights
-		nodel.update_height()
+		nodel.update_height()  # update heights
+		node.update_height()
 		return node
 
 	def out(self):
